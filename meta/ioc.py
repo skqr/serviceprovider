@@ -1,11 +1,10 @@
 import importlib
-from .construction import Singleton
 
 
-class Importer(metaclass=Singleton):
+class Importer():
 
     @staticmethod
-    def get_class(class_path: str) -> type:
+    def get_class(class_path):
         """Get a class by its path."""
         module_parts = class_path.split('.')
         module_name = ".".join(module_parts[:-1])

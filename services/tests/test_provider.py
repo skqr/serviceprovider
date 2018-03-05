@@ -1,7 +1,6 @@
 import unittest
 
 import yaml
-from meta.construction import Singleton
 from services.provider import (NoCreationMethodError, NotAServiceFactoryError,
                                ServiceFactory, ServiceProvider,
                                TooManyCreationMethodsError,
@@ -110,7 +109,7 @@ class ModelSchemataTest(unittest.TestCase):
         self.assertIsInstance(context.exception, NotImplementedError)
 
 
-class MockServiceA(metaclass=Singleton):
+class MockServiceA():
 
     pass
 
@@ -118,11 +117,11 @@ class MockServiceA(metaclass=Singleton):
 class MockServiceB():
 
     def __init__(self,
-                 service_a: MockServiceA,
-                 some_configuration: object,
-                 some_env_var: str,
-                 other_env_var: str,
-                 some_literal_value: str):
+                 service_a,
+                 some_configuration,
+                 some_env_var,
+                 other_env_var,
+                 some_literal_value):
         self.service_a = service_a
         self.some_configuration = some_configuration
         self.some_env_var = some_env_var
@@ -136,9 +135,9 @@ class MockServiceC():
         self.service_b = None
 
 
-class MockServiceFactory(ServiceFactory, metaclass=Singleton):
+class MockServiceFactory(ServiceFactory):
 
-    def __init__(self, service_b: MockServiceB):
+    def __init__(self, service_b):
         self.service_b = service_b
 
     def build(self):
@@ -148,7 +147,7 @@ class MockServiceFactory(ServiceFactory, metaclass=Singleton):
         return service_c
 
 
-class MockServiceFactoryWithoutBuild(ServiceFactory, metaclass=Singleton):
+class MockServiceFactoryWithoutBuild(ServiceFactory):
 
     pass
 

@@ -1,6 +1,6 @@
 
 
-def dictpath(dictionary: dict, path: list):
+def dictpath(dictionary, path):
     """
     Find the node within a dictionary described by the path list.
     """
@@ -19,7 +19,7 @@ def dictiter(arg):
         raise TypeError("Not iterable as dictionary.")
 
 
-def dictwalk(arg, func: callable, path: tuple = None):
+def dictwalk(arg, func, path=None):
     if path is None:
         path = ()
 

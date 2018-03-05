@@ -1,7 +1,6 @@
 import os
 
 from dotenv import find_dotenv, load_dotenv
-from meta.construction import Singleton
 from meta.ioc import Importer
 from tools.dicttools import dictpath
 
@@ -45,8 +44,7 @@ class ServiceFactory():
         raise NotImplementedError()
 
 
-# class ServiceProvider():
-class ServiceProvider(metaclass=Singleton):
+class ServiceProvider():
 
     UNKNOWN_SERVICE_ERRMSG = '"{}" is not a service we know of.'
     TOO_MANY_CREATION_METHODS_ERRMSG = 'You must define either a class or a factory for the service "{}", not both.'
@@ -61,14 +59,14 @@ class ServiceProvider(metaclass=Singleton):
         self.service_classes = {}
         self.factory_classes = {}
 
-    def conf(self, service_conf: dict, app_conf: dict = None):
+    def conf(self, service_conf, app_conf=None):
         if app_conf is None:
             app_conf = {}
 
         self.service_conf = service_conf
         self.app_conf = app_conf
 
-    def get(self, name: str):
+    def get(self, name):
         if name not in self.service_conf:
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
         elif self.service_conf[name] and all(k in self.service_conf[name] for k in ('class', 'factory')):
@@ -81,13 +79,13 @@ class ServiceProvider(metaclass=Singleton):
         else:
             raise NoCreationMethodError(self.NO_CREATION_METHOD_ERRMSG.format(name))
 
-    def _instance_service_with_class(self, name: str):
+    def _instance_service_with_class(self, name):
         if name not in self.service_classes:
             self.service_classes[name] = self.importer.get_class(self.service_conf[name]['class'])
 
         return self.service_classes[name](*self._get_args(name))
 
-    def _instance_service_with_factory(self, name: str):
+    def _instance_service_with_factory(self, name):
         if name not in self.factory_classes:
             factory_class = self.importer.get_class(self.service_conf[name]['factory'])
 
@@ -98,13 +96,13 @@ class ServiceProvider(metaclass=Singleton):
 
         return self.factory_classes[name](*self._get_args(name)).build()
 
-    def _get_args(self, name: str):
+    def _get_args(self, name):
         if 'arguments' in self.service_conf[name]:
             return [self._get_arg(ref) for ref in self.service_conf[name]['arguments']]
         else:
             return []
 
-    def _get_arg(self, ref: any):
+    def _get_arg(self, ref):
         if isinstance(ref, str):
             if '@' == ref[0]:
                 return self.get(ref[1:])
@@ -118,7 +116,7 @@ class ServiceProvider(metaclass=Singleton):
 
         return ref  # Literal
 
-    def _get_conf(self, path: str):
+    def _get_conf(self, path):
         parts = path.split('.')
 
         try:
@@ -131,7 +129,7 @@ class ServiceProvider(metaclass=Singleton):
         except KeyError as e:
             raise BadConfPathError(self.BAD_CONF_PATH_ERRMSG.format(e.args[0]))
 
-    def _get_env(self, var: str, default: any = None):
+    def _get_env(self, var, default=None):
         default = self._get_arg(default)
 
         return os.environ.get(var, default)
