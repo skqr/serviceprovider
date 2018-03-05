@@ -1,0 +1,4 @@
+some_app:
+    api:
+        version: '1'
+        url: 'https://api.some-app.com/v1/'
