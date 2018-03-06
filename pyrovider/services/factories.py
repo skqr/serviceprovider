@@ -1,5 +1,5 @@
 import yaml
-from services.provider import ServiceProvider
+from pyrovider.services.provider import ServiceProvider
 
 
 def service_provider_from_yaml(service_conf_path, app_conf_path=None):

@@ -1,6 +1,6 @@
 import unittest
 
-from tools.dicttools import dictiter, dictpath, dictwalk
+from pyrovider.tools.dicttools import dictiter, dictpath, dictwalk
 
 
 class DictToolsTest(unittest.TestCase):

@@ -1,17 +1,19 @@
 import unittest
 
 import yaml
-from services.provider import (NoCreationMethodError, NotAServiceFactoryError,
-                               ServiceFactory, ServiceProvider,
-                               TooManyCreationMethodsError,
-                               UnknownServiceError, BadConfPathError)
+from pyrovider.services.provider import (BadConfPathError,
+                                         NoCreationMethodError,
+                                         NotAServiceFactoryError,
+                                         ServiceFactory, ServiceProvider,
+                                         TooManyCreationMethodsError,
+                                         UnknownServiceError)
 
 
 class ModelSchemataTest(unittest.TestCase):
 
     maxDiff = None
-    service_conf_path = 'services/tests/test_provider/service_conf.yaml'
-    app_conf_path = 'services/tests/test_provider/app_conf.yaml'
+    service_conf_path = 'pyrovider/services/tests/test_provider/service_conf.yaml'
+    app_conf_path = 'pyrovider/services/tests/test_provider/app_conf.yaml'
 
     def setUp(self):
         # Given...
