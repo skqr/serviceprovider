@@ -52,10 +52,15 @@ class ServiceProvider():
     NOT_A_SERVICE_FACTORY_ERRMSG = 'The factory class for the service "{}" does not have a "build" method.'
     BAD_CONF_PATH_ERRMSG = 'The path "{}" was not found in the app configuration.'
 
+    _service_meths = {'function': '_get_service_func',
+                      'class': '_instance_service_with_class',
+                      'factory': '_instance_service_with_factory'}
+
     def __init__(self):
         self.importer = Importer()  # Can't inject it, obviously.
         self.service_conf = {}
         self.app_conf = {}
+        self.service_funcs = {}
         self.service_classes = {}
         self.factory_classes = {}
 
@@ -69,15 +74,26 @@ class ServiceProvider():
     def get(self, name):
         if name not in self.service_conf:
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
-        elif self.service_conf[name] and all(k in self.service_conf[name] for k in ('class', 'factory')):
+        elif self.service_conf[name] and self._has_multiple_creation_methods(name):
             raise TooManyCreationMethodsError(self.TOO_MANY_CREATION_METHODS_ERRMSG.format(name))
 
-        if self.service_conf[name] and 'class' in self.service_conf[name]:
-            return self._instance_service_with_class(name)
-        elif self.service_conf[name] and 'factory' in self.service_conf[name]:
-            return self._instance_service_with_factory(name)
+        for service_type, method in self._service_meths.iteritems():
+            if self.service_conf[name] and service_type in self.service_conf[name]:
+                return getattr(self, method)(name)
         else:
             raise NoCreationMethodError(self.NO_CREATION_METHOD_ERRMSG.format(name))
+
+    def _has_multiple_creation_methods(self, name):
+        if not self.service_conf[name]:
+            raise NoCreationMethodError(self.NO_CREATION_METHOD_ERRMSG.format(name))
+
+        return 1 < len([k for k in self._service_meths.keys() if k in self.service_conf[name]])
+
+    def _get_service_func(self, name):
+        if name not in self.service_funcs:
+            self.service_funcs[name] = self.importer.get_func(self.service_conf[name]['function'])
+
+        return self.service_funcs[name]
 
     def _instance_service_with_class(self, name):
         if name not in self.service_classes:

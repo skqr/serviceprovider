@@ -26,3 +26,6 @@ service-f:
 
 service-g:
   factory: pyrovider.services.tests.test_provider.MockServiceFactoryWithoutBuild
+
+service-h:
+  function: pyrovider.services.tests.test_provider.mock_service_func

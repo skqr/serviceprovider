@@ -24,6 +24,12 @@ class ModelSchemataTest(unittest.TestCase):
             self.app_conf = yaml.load(fp.read())
         self.provider.conf(self.service_conf, self.app_conf)
 
+    def test_getting_a_func_service(self):
+        # When...
+        service_h = self.provider.get('service-h')
+        # Then...
+        self.assertEquals(service_h, mock_service_func)
+
     def test_getting_a_service_with_a_service_dependency(self):
         # When...
         service_b = self.provider.get('service-b')
@@ -151,6 +157,10 @@ class MockServiceFactory(ServiceFactory):
 
 class MockServiceFactoryWithoutBuild(ServiceFactory):
 
+    pass
+
+
+def mock_service_func():
     pass
 
 
