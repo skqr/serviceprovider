@@ -60,6 +60,7 @@ class ServiceProvider():
         self.importer = Importer()  # Can't inject it, obviously.
         self.service_conf = {}
         self.app_conf = {}
+        self.set_services = {}
         self.service_funcs = {}
         self.service_classes = {}
         self.factory_classes = {}
@@ -74,7 +75,15 @@ class ServiceProvider():
     def get(self, name):
         if name not in self.service_conf:
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
-        elif self.service_conf[name] and self._has_multiple_creation_methods(name):
+
+        return self._get_set_service(name) or self._get_built_service(name)
+
+    def _get_set_service(self, name):
+        if name in self.set_services:
+            return self.set_services[name]
+
+    def _get_built_service(self, name):
+        if self.service_conf[name] and self._has_multiple_creation_methods(name):
             raise TooManyCreationMethodsError(self.TOO_MANY_CREATION_METHODS_ERRMSG.format(name))
 
         for service_type, method in self._service_meths.iteritems():
@@ -82,6 +91,12 @@ class ServiceProvider():
                 return getattr(self, method)(name)
         else:
             raise NoCreationMethodError(self.NO_CREATION_METHOD_ERRMSG.format(name))
+
+    def set(self, name, service):
+        if name not in self.service_conf:
+            raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
+
+        self.set_services[name] = service
 
     def _has_multiple_creation_methods(self, name):
         if not self.service_conf[name]:

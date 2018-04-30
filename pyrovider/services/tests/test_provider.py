@@ -1,5 +1,6 @@
 import unittest
 
+import mock
 import yaml
 from pyrovider.services.provider import (BadConfPathError,
                                          NoCreationMethodError,
@@ -112,9 +113,27 @@ class ModelSchemataTest(unittest.TestCase):
                          str(context.exception))
 
     def test_getting_service_factory_without_build(self):
-        with self.assertRaises(NotImplementedError) as context:
+        # When, then...
+        with self.assertRaises(NotImplementedError):
             self.provider.get('service-g')
-        self.assertIsInstance(context.exception, NotImplementedError)
+
+    def test_setting_known_service(self):
+        # Given...
+        service = mock.MagicMock()
+        service.do = mock.MagicMock(return_value="Yeah")
+        # When...
+        self.provider.set('service-a', service)
+        service = self.provider.get('service-a')
+        # Then...
+        self.assertIsInstance(service, mock.MagicMock)
+        self.assertEquals("Yeah", service.do())
+
+    def test_setting_unknown_service(self):
+        # Given...
+        service = mock.MagicMock()
+        # When, then...
+        with self.assertRaises(UnknownServiceError):
+            self.provider.set('service-z', service)
 
 
 class MockServiceA():
