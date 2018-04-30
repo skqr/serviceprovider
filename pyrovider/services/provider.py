@@ -47,12 +47,15 @@ class ServiceFactory():
 class ServiceProvider():
 
     UNKNOWN_SERVICE_ERRMSG = '"{}" is not a service we know of.'
-    TOO_MANY_CREATION_METHODS_ERRMSG = 'You must define either a class or a factory for the service "{}", not both.'
-    NO_CREATION_METHOD_ERRMSG = 'You must define either a class or a factory for the service "{}", none was found.'
-    NOT_A_SERVICE_FACTORY_ERRMSG = 'The factory class for the service "{}" does not have a "build" method.'
+    TOO_MANY_CREATION_METHODS_ERRMSG = 'You must define either a class, an instance, ' \
+                                       'or a factory for the service "{}", not both.'
+    NO_CREATION_METHOD_ERRMSG = 'You must define either a class, an instance, or ' \
+                                'a factory for the service "{}", none was found.'
+    NOT_A_SERVICE_FACTORY_ERRMSG = 'The factory class for the service ' \
+                                   '"{}" does not have a "build" method.'
     BAD_CONF_PATH_ERRMSG = 'The path "{}" was not found in the app configuration.'
 
-    _service_meths = {'function': '_get_service_func',
+    _service_meths = {'instance': '_get_service_instance',
                       'class': '_instance_service_with_class',
                       'factory': '_instance_service_with_factory'}
 
@@ -61,7 +64,7 @@ class ServiceProvider():
         self.service_conf = {}
         self.app_conf = {}
         self.set_services = {}
-        self.service_funcs = {}
+        self.service_instances = {}
         self.service_classes = {}
         self.factory_classes = {}
 
@@ -104,21 +107,21 @@ class ServiceProvider():
 
         return 1 < len([k for k in self._service_meths.keys() if k in self.service_conf[name]])
 
-    def _get_service_func(self, name):
-        if name not in self.service_funcs:
-            self.service_funcs[name] = self.importer.get_func(self.service_conf[name]['function'])
+    def _get_service_instance(self, name):
+        if name not in self.service_instances:
+            self.service_instances[name] = self.importer.get_obj(self.service_conf[name]['instance'])
 
-        return self.service_funcs[name]
+        return self.service_instances[name]
 
     def _instance_service_with_class(self, name):
         if name not in self.service_classes:
-            self.service_classes[name] = self.importer.get_class(self.service_conf[name]['class'])
+            self.service_classes[name] = self.importer.get_obj(self.service_conf[name]['class'])
 
         return self.service_classes[name](*self._get_args(name))
 
     def _instance_service_with_factory(self, name):
         if name not in self.factory_classes:
-            factory_class = self.importer.get_class(self.service_conf[name]['factory'])
+            factory_class = self.importer.get_obj(self.service_conf[name]['factory'])
 
             if not hasattr(factory_class, 'build') or not callable(factory_class.build):
                 raise NotAServiceFactoryError(self.NOT_A_SERVICE_FACTORY_ERRMSG.format(name))

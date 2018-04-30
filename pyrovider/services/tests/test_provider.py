@@ -25,11 +25,11 @@ class ModelSchemataTest(unittest.TestCase):
             self.app_conf = yaml.load(fp.read())
         self.provider.conf(self.service_conf, self.app_conf)
 
-    def test_getting_a_func_service(self):
+    def test_getting_an_instance_service(self):
         # When...
         service_h = self.provider.get('service-h')
         # Then...
-        self.assertEquals(service_h, mock_service_func)
+        self.assertEquals(service_h, mock_service_instance)
 
     def test_getting_a_service_with_a_service_dependency(self):
         # When...
@@ -87,19 +87,22 @@ class ModelSchemataTest(unittest.TestCase):
     def test_getting_no_creation_methods(self):
         with self.assertRaises(NoCreationMethodError) as context:
             self.provider.get('service-d')
-        self.assertEqual('You must define either a class or a factory for the service "service-d", none was found.',
+        self.assertEqual('You must define either a class, an instance, or a factory '
+                         'for the service "service-d", none was found.',
                          str(context.exception))
 
     def test_getting_too_many_creation_methods(self):
         with self.assertRaises(TooManyCreationMethodsError) as context:
             self.provider.get('service-e')
-        self.assertEqual('You must define either a class or a factory for the service "service-e", not both.',
+        self.assertEqual('You must define either a class, an instance, or a factory '
+                         'for the service "service-e", not both.',
                          str(context.exception))
 
     def test_getting_not_a_service_factory(self):
         with self.assertRaises(NotAServiceFactoryError) as context:
             self.provider.get('service-f')
-        self.assertEqual('The factory class for the service "service-f" does not have a "build" method.',
+        self.assertEqual('The factory class for the service "service-f" '
+                         'does not have a "build" method.',
                          str(context.exception))
 
     def test_getting_a_service_with_broken_dependencies(self):
@@ -179,7 +182,7 @@ class MockServiceFactoryWithoutBuild(ServiceFactory):
     pass
 
 
-def mock_service_func():
+def mock_service_instance():
     pass
 
 
