@@ -29,3 +29,9 @@ service-g:
 
 service-h:
   instance: pyrovider.services.tests.test_provider.mock_service_instance
+
+service-i:
+  class: pyrovider.services.tests.test_provider.MockServiceI
+  arguments:
+    - ['@service-a', '@service-b']
+    - ['@service-c', '@service-h']

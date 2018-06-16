@@ -147,6 +147,8 @@ class ServiceProvider():
         elif isinstance(ref, list):
             if '$' == ref[0][0]:
                 return self._get_env(ref[0][1:], ref[1])
+            else:
+                return [self._get_arg(i) for i in ref]
 
         return ref  # Literal
 

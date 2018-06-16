@@ -66,6 +66,15 @@ class ModelSchemataTest(unittest.TestCase):
         # Then...
         self.assertEqual("https://api.some-app.com/v1/", service_b.other_env_var)
 
+    def test_getting_a_service_with_a_list_of_references_dependency(self):
+        # When...
+        service_i = self.provider.get('service-i')
+        # Then...
+        self.assertIsInstance(service_i.some_services_1[0], MockServiceA)
+        self.assertIsInstance(service_i.some_services_1[1], MockServiceB)
+        self.assertIsInstance(service_i.some_services_2[0], MockServiceC)
+        self.assertIs(service_i.some_services_2[1], mock_service_instance)
+
     def test_getting_a_service_with_a_literal_dependency(self):
         # When...
         service_b = self.provider.get('service-b')
@@ -163,6 +172,15 @@ class MockServiceC():
 
     def __init__(self):
         self.service_b = None
+
+
+class MockServiceI():
+
+    def __init__(self,
+                 some_services_1,
+                 some_services_2):
+        self.some_services_1 = some_services_1
+        self.some_services_2 = some_services_2
 
 
 class MockServiceFactory(ServiceFactory):
