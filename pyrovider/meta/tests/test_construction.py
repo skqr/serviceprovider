@@ -1,6 +1,6 @@
 import unittest
 
-from meta.construction import Singleton
+from pyrovider.meta.construction import Singleton
 
 
 class SingletonTest(unittest.TestCase):
