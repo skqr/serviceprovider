@@ -1,9 +1,9 @@
 import os
 
 from dotenv import find_dotenv, load_dotenv
-from meta.construction import Singleton
-from meta.ioc import Importer
-from tools.dicttools import dictpath
+from pyrovider.meta.construction import Singleton
+from pyrovider.meta.ioc import Importer
+from pyrovider.tools.dicttools import dictpath
 
 # Loads env vars from .env file
 load_dotenv(find_dotenv())

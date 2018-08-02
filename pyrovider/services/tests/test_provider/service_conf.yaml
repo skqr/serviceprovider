@@ -1,8 +1,8 @@
 service-a:
-  class: services.tests.test_provider.MockServiceA
+  class: pyrovider.services.tests.test_provider.MockServiceA
 
 service-b:
-  class: services.tests.test_provider.MockServiceB
+  class: pyrovider.services.tests.test_provider.MockServiceB
   arguments:
     - '@service-a'
     - '%some_app.api%'
@@ -11,18 +11,18 @@ service-b:
     - 'A literal value.'
 
 service-c:
-  factory: services.tests.test_provider.MockServiceFactory
+  factory: pyrovider.services.tests.test_provider.MockServiceFactory
   arguments:
     - '@service-b'
 
 service-d:
 
 service-e:
-  class: services.tests.test_provider.MockServiceA
-  factory: services.tests.test_provider.MockServiceFactory
+  class: pyrovider.services.tests.test_provider.MockServiceA
+  factory: pyrovider.services.tests.test_provider.MockServiceFactory
 
 service-f:
-  factory: services.tests.test_provider.MockServiceA
+  factory: pyrovider.services.tests.test_provider.MockServiceA
 
 service-g:
-  factory: services.tests.test_provider.MockServiceFactoryWithoutBuild
+  factory: pyrovider.services.tests.test_provider.MockServiceFactoryWithoutBuild
