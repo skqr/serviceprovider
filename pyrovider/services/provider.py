@@ -111,7 +111,7 @@ class ServiceProvider(metaclass=Singleton):
             elif '%' == ref[0] == ref[-1:]:
                 return self._get_conf(ref[1:-1])
             elif '$' == ref[0]:
-                return self._get_env(ref[1:-1])
+                return self._get_env(ref[1:])
         elif isinstance(ref, list):
             if '$' == ref[0][0]:
                 return self._get_env(ref[0][1:], ref[1])
