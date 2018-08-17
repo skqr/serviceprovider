@@ -37,6 +37,13 @@ class ModelSchemataTest(unittest.TestCase):
         # Then...
         self.assertIsInstance(service_b.service_a, MockServiceA)
 
+    def test_getting_a_service_with_a_service_named_dependency(self):
+        # When...
+        password = 'qwerty'
+        service_b = self.provider.get('service-b', password=password)
+        # Then...
+        self.assertEqual(service_b.password, password)
+
     def test_getting_a_service_with_a_config_dependency(self):
         # When...
         service_b = self.provider.get('service-b')
@@ -86,6 +93,13 @@ class ModelSchemataTest(unittest.TestCase):
         service_c = self.provider.get('service-c')
         # Then...
         self.assertIsInstance(service_c.service_b, MockServiceB)
+
+    def test_getting_a_service_with_a_factory_named_dependency(self):
+        # When...
+        service_a = object()
+        service_c = self.provider.get('service-c', service_a=service_a)
+        # Then...
+        self.assertEqual(service_c.service_a, service_a)
 
     def test_getting_unknown_service(self):
         with self.assertRaises(UnknownServiceError) as context:
@@ -160,17 +174,20 @@ class MockServiceB():
                  some_configuration,
                  some_env_var,
                  other_env_var,
-                 some_literal_value):
+                 some_literal_value,
+                 password):
         self.service_a = service_a
         self.some_configuration = some_configuration
         self.some_env_var = some_env_var
         self.other_env_var = other_env_var
         self.some_literal_value = some_literal_value
+        self.password = password
 
 
 class MockServiceC():
 
     def __init__(self):
+        self.service_a = None
         self.service_b = None
 
 
@@ -185,11 +202,13 @@ class MockServiceI():
 
 class MockServiceFactory(ServiceFactory):
 
-    def __init__(self, service_b):
+    def __init__(self, service_b, service_a=None):
+        self.service_a = service_a
         self.service_b = service_b
 
     def build(self):
         service_c = MockServiceC()
+        service_c.service_a = self.service_a
         service_c.service_b = self.service_b
 
         return service_c

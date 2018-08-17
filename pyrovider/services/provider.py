@@ -75,23 +75,23 @@ class ServiceProvider():
         self.service_conf = service_conf
         self.app_conf = app_conf
 
-    def get(self, name):
+    def get(self, name, **kwargs):
         if name not in self.service_conf:
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
 
-        return self._get_set_service(name) or self._get_built_service(name)
+        return self._get_set_service(name) or self._get_built_service(name, **kwargs)
 
     def _get_set_service(self, name):
         if name in self.set_services:
             return self.set_services[name]
 
-    def _get_built_service(self, name):
+    def _get_built_service(self, name, **kwargs):
         if self.service_conf[name] and self._has_multiple_creation_methods(name):
             raise TooManyCreationMethodsError(self.TOO_MANY_CREATION_METHODS_ERRMSG.format(name))
 
         for service_type, method in self._service_meths.iteritems():
             if self.service_conf[name] and service_type in self.service_conf[name]:
-                return getattr(self, method)(name)
+                return getattr(self, method)(name, **kwargs)
         else:
             raise NoCreationMethodError(self.NO_CREATION_METHOD_ERRMSG.format(name))
 
@@ -113,13 +113,13 @@ class ServiceProvider():
 
         return self.service_instances[name]
 
-    def _instance_service_with_class(self, name):
+    def _instance_service_with_class(self, name, **kwargs):
         if name not in self.service_classes:
             self.service_classes[name] = self.importer.get_obj(self.service_conf[name]['class'])
 
-        return self.service_classes[name](*self._get_args(name))
+        return self.service_classes[name](*self._get_args(name), **self._get_kwargs(name, **kwargs))
 
-    def _instance_service_with_factory(self, name):
+    def _instance_service_with_factory(self, name, **kwargs):
         if name not in self.factory_classes:
             factory_class = self.importer.get_obj(self.service_conf[name]['factory'])
 
@@ -128,13 +128,21 @@ class ServiceProvider():
 
             self.factory_classes[name] = factory_class
 
-        return self.factory_classes[name](*self._get_args(name)).build()
+        return self.factory_classes[name](*self._get_args(name), **self._get_kwargs(name, **kwargs)).build()
 
     def _get_args(self, name):
         if 'arguments' in self.service_conf[name]:
             return [self._get_arg(ref) for ref in self.service_conf[name]['arguments']]
         else:
             return []
+
+    def _get_kwargs(self, name, **kwargs):
+        named_arguments = {}
+
+        for k, v in self.service_conf[name].get('named_arguments', {}).items():
+            named_arguments[k] = kwargs.get(k, None) or self._get_arg(v)
+
+        return named_arguments
 
     def _get_arg(self, ref):
         if isinstance(ref, str):
