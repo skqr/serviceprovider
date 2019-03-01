@@ -61,6 +61,10 @@ class ServiceProvider(metaclass=Singleton):
         self.service_classes = {}
         self.factory_classes = {}
 
+    def reset(self):
+        self.service_classes = {}
+        self.factory_classes = {}
+
     def conf(self, service_conf: dict, app_conf: dict = None):
         if app_conf is None:
             app_conf = {}
