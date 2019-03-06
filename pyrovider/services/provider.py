@@ -68,6 +68,12 @@ class ServiceProvider():
         self.service_classes = {}
         self.factory_classes = {}
 
+    def reset(self):
+        self.set_services = {}
+        self.service_instances = {}
+        self.service_classes = {}
+        self.factory_classes = {}
+
     def conf(self, service_conf, app_conf=None):
         if app_conf is None:
             app_conf = {}
