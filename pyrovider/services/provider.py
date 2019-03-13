@@ -60,6 +60,7 @@ class ServiceProvider(metaclass=Singleton):
         self.app_conf = {}
         self.service_classes = {}
         self.factory_classes = {}
+        self.set_services = {}
 
     def reset(self):
         self.service_classes = {}
@@ -75,7 +76,15 @@ class ServiceProvider(metaclass=Singleton):
     def get(self, name: str):
         if name not in self.service_conf:
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
-        elif self.service_conf[name] and all(k in self.service_conf[name] for k in ('class', 'factory')):
+
+        return self._get_set_service(name) or self._get_built_service(name)
+
+    def _get_set_service(self, name: str):
+        if name in self.set_services:
+            return self.set_services[name]
+
+    def _get_built_service(self, name: str):
+        if self.service_conf[name] and all(k in self.service_conf[name] for k in ('class', 'factory')):
             raise TooManyCreationMethodsError(self.TOO_MANY_CREATION_METHODS_ERRMSG.format(name))
 
         if self.service_conf[name] and 'class' in self.service_conf[name]:
@@ -84,6 +93,12 @@ class ServiceProvider(metaclass=Singleton):
             return self._instance_service_with_factory(name)
         else:
             raise NoCreationMethodError(self.NO_CREATION_METHOD_ERRMSG.format(name))
+
+    def set(self, name, service):
+        if name not in self.service_conf:
+            raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
+
+        self.set_services[name] = service
 
     def _instance_service_with_class(self, name: str):
         if name not in self.service_classes:

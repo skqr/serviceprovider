@@ -1,5 +1,5 @@
 import unittest
-
+from unittest import mock
 import yaml
 from pyrovider.meta.construction import Singleton
 from pyrovider.services.provider import (NoCreationMethodError, NotAServiceFactoryError,
@@ -108,6 +108,17 @@ class ModelSchemataTest(unittest.TestCase):
         with self.assertRaises(NotImplementedError) as context:
             self.provider.get('service-g')
         self.assertIsInstance(context.exception, NotImplementedError)
+
+    def test_setting_known_service(self):
+        # Given...
+        service = mock.MagicMock()
+        service.do = mock.MagicMock(return_value="Yeah")
+        # When...
+        self.provider.set('service-a', service)
+        service = self.provider.get('service-a')
+        # Then...
+        self.assertIsInstance(service, mock.MagicMock)
+        self.assertEqual("Yeah", service.do())
 
 
 class MockServiceA(metaclass=Singleton):
