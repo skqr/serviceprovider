@@ -2,7 +2,7 @@ import yaml
 from pyrovider.services.provider import ServiceProvider
 
 
-def service_provider_from_yaml(service_conf_path, app_conf_path=None):
+def service_provider_from_yaml(service_conf_path: str, app_conf_path: str = None):
     provider = ServiceProvider()
 
     with open(service_conf_path, 'r') as fp:

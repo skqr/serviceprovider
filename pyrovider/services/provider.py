@@ -95,7 +95,7 @@ class ServiceProvider(metaclass=Singleton):
         if name in self.set_services:
             return self.set_services[name]
 
-    def _get_built_service(self, name, **kwargs):
+    def _get_built_service(self, name: str, **kwargs):
         if self.service_conf[name] and self._has_multiple_creation_methods(name):
             raise TooManyCreationMethodsError(self.TOO_MANY_CREATION_METHODS_ERRMSG.format(name))
 
@@ -105,7 +105,7 @@ class ServiceProvider(metaclass=Singleton):
         else:
             raise NoCreationMethodError(self.NO_CREATION_METHOD_ERRMSG.format(name))
 
-    def set(self, name, service):
+    def set(self, name: str, service: any):
         if name not in self.service_conf:
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
 
