@@ -15,5 +15,6 @@ class ImporterTest(unittest.TestCase):
         importer = Importer()
         with self.assertRaises(KeyError) as context:
             importer.get_class('pyrovider.meta.ioc.Undefined')
+
         self.assertEqual("'Undefined'",
                          str(context.exception))

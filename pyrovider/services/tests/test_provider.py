@@ -1,11 +1,14 @@
 import unittest
-from unittest import mock
 import yaml
+
+from unittest import mock
 from pyrovider.meta.construction import Singleton
-from pyrovider.services.provider import (NoCreationMethodError, NotAServiceFactoryError,
+from pyrovider.services.provider import (BadConfPathError,
+                                         NoCreationMethodError,
+                                         NotAServiceFactoryError,
                                          ServiceFactory, ServiceProvider,
                                          TooManyCreationMethodsError,
-                                         UnknownServiceError, BadConfPathError)
+                                         UnknownServiceError)
 
 
 class ModelSchemataTest(unittest.TestCase):
@@ -23,11 +26,24 @@ class ModelSchemataTest(unittest.TestCase):
             self.app_conf = yaml.load(fp.read())
         self.provider.conf(self.service_conf, self.app_conf)
 
+    def test_getting_an_instance_service(self):
+        # When...
+        service_h = self.provider.get('service-h')
+        # Then...
+        self.assertEquals(service_h, mock_service_instance)
+
     def test_getting_a_service_with_a_service_dependency(self):
         # When...
         service_b = self.provider.get('service-b')
         # Then...
         self.assertIsInstance(service_b.service_a, MockServiceA)
+
+    def test_getting_a_service_with_a_service_named_dependency(self):
+        # When...
+        password = 'qwerty'
+        service_b = self.provider.get('service-b', password=password)
+        # Then...
+        self.assertEqual(service_b.password, password)
 
     def test_getting_a_service_with_a_config_dependency(self):
         # When...
@@ -58,6 +74,15 @@ class ModelSchemataTest(unittest.TestCase):
         # Then...
         self.assertEqual("https://api.some-app.com/v1/", service_b.other_env_var)
 
+    def test_getting_a_service_with_a_list_of_references_dependency(self):
+        # When...
+        service_i = self.provider.get('service-i')
+        # Then...
+        self.assertIsInstance(service_i.some_services_1[0], MockServiceA)
+        self.assertIsInstance(service_i.some_services_1[1], MockServiceB)
+        self.assertIsInstance(service_i.some_services_2[0], MockServiceC)
+        self.assertIs(service_i.some_services_2[1], mock_service_instance)
+
     def test_getting_a_service_with_a_literal_dependency(self):
         # When...
         service_b = self.provider.get('service-b')
@@ -70,6 +95,13 @@ class ModelSchemataTest(unittest.TestCase):
         # Then...
         self.assertIsInstance(service_c.service_b, MockServiceB)
 
+    def test_getting_a_service_with_a_factory_named_dependency(self):
+        # When...
+        service_a = object()
+        service_c = self.provider.get('service-c', service_a=service_a)
+        # Then...
+        self.assertEqual(service_c.service_a, service_a)
+
     def test_getting_unknown_service(self):
         with self.assertRaises(UnknownServiceError) as context:
             self.provider.get('service-unknown')
@@ -79,19 +111,22 @@ class ModelSchemataTest(unittest.TestCase):
     def test_getting_no_creation_methods(self):
         with self.assertRaises(NoCreationMethodError) as context:
             self.provider.get('service-d')
-        self.assertEqual('You must define either a class or a factory for the service "service-d", none was found.',
+        self.assertEqual('You must define either a class, an instance, or a factory '
+                         'for the service "service-d", none was found.',
                          str(context.exception))
 
     def test_getting_too_many_creation_methods(self):
         with self.assertRaises(TooManyCreationMethodsError) as context:
             self.provider.get('service-e')
-        self.assertEqual('You must define either a class or a factory for the service "service-e", not both.',
+        self.assertEqual('You must define either a class, an instance, or a factory '
+                         'for the service "service-e", not both.',
                          str(context.exception))
 
     def test_getting_not_a_service_factory(self):
         with self.assertRaises(NotAServiceFactoryError) as context:
             self.provider.get('service-f')
-        self.assertEqual('The factory class for the service "service-f" does not have a "build" method.',
+        self.assertEqual('The factory class for the service "service-f" '
+                         'does not have a "build" method.',
                          str(context.exception))
 
     def test_getting_a_service_with_broken_dependencies(self):
@@ -105,9 +140,9 @@ class ModelSchemataTest(unittest.TestCase):
                          str(context.exception))
 
     def test_getting_service_factory_without_build(self):
-        with self.assertRaises(NotImplementedError) as context:
+        # When, then...
+        with self.assertRaises(NotImplementedError):
             self.provider.get('service-g')
-        self.assertIsInstance(context.exception, NotImplementedError)
 
     def test_setting_known_service(self):
         # Given...
@@ -120,8 +155,15 @@ class ModelSchemataTest(unittest.TestCase):
         self.assertIsInstance(service, mock.MagicMock)
         self.assertEqual("Yeah", service.do())
 
+    def test_setting_unknown_service(self):
+        # Given...
+        service = mock.MagicMock()
+        # When, then...
+        with self.assertRaises(UnknownServiceError):
+            self.provider.set('service-z', service)
 
-class MockServiceA(metaclass=Singleton):
+
+class MockServiceA():
 
     pass
 
@@ -129,38 +171,56 @@ class MockServiceA(metaclass=Singleton):
 class MockServiceB():
 
     def __init__(self,
-                 service_a: MockServiceA,
-                 some_configuration: object,
-                 some_env_var: str,
-                 other_env_var: str,
-                 some_literal_value: str):
+                 service_a,
+                 some_configuration,
+                 some_env_var,
+                 other_env_var,
+                 some_literal_value,
+                 password):
         self.service_a = service_a
         self.some_configuration = some_configuration
         self.some_env_var = some_env_var
         self.other_env_var = other_env_var
         self.some_literal_value = some_literal_value
+        self.password = password
 
 
 class MockServiceC():
 
     def __init__(self):
+        self.service_a = None
         self.service_b = None
 
 
-class MockServiceFactory(ServiceFactory, metaclass=Singleton):
+class MockServiceI():
 
-    def __init__(self, service_b: MockServiceB):
+    def __init__(self,
+                 some_services_1,
+                 some_services_2):
+        self.some_services_1 = some_services_1
+        self.some_services_2 = some_services_2
+
+
+class MockServiceFactory(ServiceFactory):
+
+    def __init__(self, service_b, service_a=None):
+        self.service_a = service_a
         self.service_b = service_b
 
     def build(self):
         service_c = MockServiceC()
+        service_c.service_a = self.service_a
         service_c.service_b = self.service_b
 
         return service_c
 
 
-class MockServiceFactoryWithoutBuild(ServiceFactory, metaclass=Singleton):
+class MockServiceFactoryWithoutBuild(ServiceFactory):
 
+    pass
+
+
+def mock_service_instance():
     pass
 
 
