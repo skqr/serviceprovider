@@ -9,11 +9,15 @@ service-b:
     - [$SOME_ENV_VAR, 'Some default value.']
     - [$OTHER_ENV_VAR, '%some_app.api.url%']
     - 'A literal value.'
+  named_arguments:
+    password: 'default'
 
 service-c:
   factory: pyrovider.services.tests.test_provider.MockServiceFactory
   arguments:
     - '@service-b'
+  named_arguments:
+    service_a: '@service-a'
 
 service-d:
 
@@ -26,3 +30,12 @@ service-f:
 
 service-g:
   factory: pyrovider.services.tests.test_provider.MockServiceFactoryWithoutBuild
+
+service-h:
+  instance: pyrovider.services.tests.test_provider.mock_service_instance
+
+service-i:
+  class: pyrovider.services.tests.test_provider.MockServiceI
+  arguments:
+    - ['@service-a', '@service-b']
+    - ['@service-c', '@service-h']
