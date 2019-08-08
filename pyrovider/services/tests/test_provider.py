@@ -21,9 +21,9 @@ class ModelSchemataTest(unittest.TestCase):
         # Given...
         self.provider = ServiceProvider()
         with open(self.service_conf_path, 'r') as fp:
-            self.service_conf = yaml.load(fp.read())
+            self.service_conf = yaml.safe_load(fp.read())
         with open(self.app_conf_path, 'r') as fp:
-            self.app_conf = yaml.load(fp.read())
+            self.app_conf = yaml.safe_load(fp.read())
         self.provider.conf(self.service_conf, self.app_conf)
 
     def test_getting_an_instance_service(self):
