@@ -12,7 +12,7 @@ def dictpath(dictionary: dict, path: list):
 
 def dictiter(arg):
     if isinstance(arg, dict):
-        return iter(list(arg.items()))
+        return iter(arg.items())
     elif isinstance(arg, list):
         return enumerate(arg)
     else:
