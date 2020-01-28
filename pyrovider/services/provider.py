@@ -1,5 +1,7 @@
 import os
 
+from collections import defaultdict
+
 from dotenv import find_dotenv, load_dotenv
 from pyrovider.meta.construction import Singleton
 from pyrovider.meta.ioc import Importer
@@ -45,6 +47,30 @@ class ServiceFactory():
         raise NotImplementedError()
 
 
+class Namespace:
+
+    def __init__(self, name, service_names, provider):
+        self.name = name
+        self.provider = provider
+        self._service_names = service_names
+
+    def __getattr__(self, key):
+        if key in self._service_names:
+            return self.get(key)
+
+        raise AttributeError(f"Unknown attribute or service '{key}'")
+
+    def get(self, name, **kwargs):
+        return self.provider.get(f"{self.name}.{name}", **kwargs)
+
+    def set(self, name: str, service: any):
+        return self.provider.set(f"{self.name}.{name}", service)
+
+    @property
+    def namespaces(self):
+        return self._service_names
+
+
 # class ServiceProvider():
 class ServiceProvider(metaclass=Singleton):
 
@@ -71,6 +97,7 @@ class ServiceProvider(metaclass=Singleton):
         self.service_instances = {}
         self.service_classes = {}
         self.factory_classes = {}
+        self._namespaces = {}
 
     def reset(self):
         self.set_services = {}
@@ -85,6 +112,28 @@ class ServiceProvider(metaclass=Singleton):
         self.service_conf = service_conf
         self.app_conf = app_conf
 
+        namespace_map = defaultdict(list)
+        for key, value in self.service_conf.items():
+            parts = key.split(".")
+            namespace = parts[0] if len(parts) > 1 else None
+            service_name = ".".join(parts[1:])
+
+            if namespace:
+                namespace_map[namespace].append(service_name)
+
+        for namespace, service_names in namespace_map.items():
+            self._namespaces[namespace] = Namespace(namespace, service_names, self)
+
+    @property
+    def namespaces(self):
+        return self._namespaces.keys()
+
+    def __getattr__(self, key):
+        if key in self._namespaces:
+            return self._namespaces[key]
+
+        raise AttributeError(f"Unknown attribute or namespace '{key}'")
+
     def get(self, name: str, **kwargs):
         if name not in self.service_conf:
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
@@ -92,8 +141,7 @@ class ServiceProvider(metaclass=Singleton):
         return self._get_set_service(name) or self._get_built_service(name, **kwargs)
 
     def _get_set_service(self, name: str):
-        if name in self.set_services:
-            return self.set_services[name]
+        return self.set_services.get(name)
 
     def _get_built_service(self, name: str, **kwargs):
         if self.service_conf[name] and self._has_multiple_creation_methods(name):
