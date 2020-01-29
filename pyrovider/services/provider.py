@@ -47,15 +47,40 @@ class ServiceFactory():
         raise NotImplementedError()
 
 
+def get_services_and_namespaces(services_names, provider):
+    services = []
+    namespaces = {}
+    namespace_map = defaultdict(list)
+
+    for key in services_names:
+        parts = key.split(".")
+        namespace = parts[0] if len(parts) > 1 else None
+        service_name = ".".join(parts[1:])
+        if namespace:
+            namespace_map[namespace].append(service_name)
+        else:
+            services.append(key)
+    for namespace, namespace_service_names in namespace_map.items():
+        namespaces[namespace] = Namespace(namespace, namespace_service_names, provider)
+
+    return services, namespaces
+
+
 class Namespace:
 
-    def __init__(self, name, service_names, provider):
+    def __init__(self, name, services_names, provider):
         self.name = name
         self.provider = provider
-        self._service_names = service_names
+
+        services, namespaces = get_services_and_namespaces(services_names, provider)
+        self._service_names = services
+        self._namespaces = namespaces
 
     def __getattr__(self, key):
-        if key in self._service_names:
+        if key in self._namespaces:
+            return self._namespaces[key]
+
+        elif key in self._service_names:
             return self.get(key)
 
         raise AttributeError(f"Unknown attribute or service '{key}'")
@@ -68,6 +93,10 @@ class Namespace:
 
     @property
     def namespaces(self):
+        return self._namespaces.keys()
+
+    @property
+    def service_names(self):
         return self._service_names
 
 
@@ -98,6 +127,7 @@ class ServiceProvider(metaclass=Singleton):
         self.service_classes = {}
         self.factory_classes = {}
         self._namespaces = {}
+        self._service_names = []
 
     def reset(self):
         self.set_services = {}
@@ -112,27 +142,26 @@ class ServiceProvider(metaclass=Singleton):
         self.service_conf = service_conf
         self.app_conf = app_conf
 
-        namespace_map = defaultdict(list)
-        for key, value in self.service_conf.items():
-            parts = key.split(".")
-            namespace = parts[0] if len(parts) > 1 else None
-            service_name = ".".join(parts[1:])
-
-            if namespace:
-                namespace_map[namespace].append(service_name)
-
-        for namespace, service_names in namespace_map.items():
-            self._namespaces[namespace] = Namespace(namespace, service_names, self)
+        service_names, namespaces = get_services_and_namespaces(service_conf.keys(), self)
+        self._service_names = service_names
+        self._namespaces = namespaces
 
     @property
     def namespaces(self):
         return self._namespaces.keys()
 
+    @property
+    def service_names(self):
+        return self._service_names
+
     def __getattr__(self, key):
         if key in self._namespaces:
             return self._namespaces[key]
 
-        raise AttributeError(f"Unknown attribute or namespace '{key}'")
+        elif key in self._service_names:
+            return self.get(key)
+
+        raise AttributeError(f"Unknown attribute, service or namespace '{key}'")
 
     def get(self, name: str, **kwargs):
         if name not in self.service_conf:
