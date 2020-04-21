@@ -81,9 +81,6 @@ class ServiceProvider(metaclass=Singleton):
     def reset(self):
         release_local(self._local)
 
-    def __del__(self):
-        self.reset()
-
     def conf(self, service_conf: dict, app_conf: dict = None):
         if app_conf is None:
             app_conf = {}
