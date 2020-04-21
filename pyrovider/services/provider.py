@@ -84,12 +84,6 @@ class ServiceProvider(metaclass=Singleton):
     def __del__(self):
         self.reset()
 
-    def reset(self):
-        self.set_services = {}
-        self.service_instances = {}
-        self.service_classes = {}
-        self.factory_classes = {}
-
     def conf(self, service_conf: dict, app_conf: dict = None):
         if app_conf is None:
             app_conf = {}
@@ -193,7 +187,7 @@ class ServiceProvider(metaclass=Singleton):
         parts = path.split('.')
 
         try:
-            trunk = self._local.app_conf[parts[0]]
+            trunk = self.app_conf[parts[0]]
         except KeyError as e:
             raise BadConfPathError(self.BAD_CONF_PATH_ERRMSG.format(parts[0]))
 
