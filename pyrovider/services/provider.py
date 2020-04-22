@@ -168,7 +168,7 @@ class ServiceProvider(metaclass=Singleton):
             elif '%' == ref[0] == ref[-1:]:
                 return self._get_conf(ref[1:-1])
             elif '$' == ref[0]:
-                return self._get_env(ref[1:-1])
+                return self._get_env(ref[1:])
             elif '^' == ref[0]:
                 return self.importer.get_obj(ref[1:])
 
