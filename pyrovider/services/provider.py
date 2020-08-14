@@ -46,8 +46,8 @@ class ServiceFactory():
         raise NotImplementedError()
 
 
-# class ServiceProvider():
-class ServiceProvider(metaclass=Singleton):
+class ServiceProvider:
+#class ServiceProvider(metaclass=Singleton):
 
     UNKNOWN_SERVICE_ERRMSG = '"{}" is not a service we know of.'
     TOO_MANY_CREATION_METHODS_ERRMSG = 'You must define either a class, an instance, ' \
