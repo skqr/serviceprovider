@@ -157,7 +157,7 @@ class ServiceProvider:
 
         self.service_conf = service_conf
         self.app_conf = app_conf
-        self.name = service_conf.get("name") or self.name
+        self.name = service_conf.get("__name__") or self.name
 
         service_names, namespaces = get_services_and_namespaces(service_conf.keys(), self)
 
