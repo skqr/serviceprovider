@@ -1,9 +1,9 @@
 import os
 
+from typing import List, Dict, Tuple
 from collections import defaultdict
 
 from dotenv import find_dotenv, load_dotenv
-from pyrovider.meta.construction import Singleton
 from pyrovider.meta.ioc import Importer
 from pyrovider.tools.dicttools import dictpath
 
@@ -52,7 +52,7 @@ class ServiceFactory():
         raise NotImplementedError()
 
 
-def get_services_and_namespaces(services_names, provider):
+def get_services_and_namespaces(services_names: List[str], provider):
     services = []
     namespaces = {}
     namespace_map = defaultdict(list)
@@ -105,8 +105,9 @@ class Namespace:
         return self._service_names
 
 
-# class ServiceProvider():
-class ServiceProvider(metaclass=Singleton):
+class ServiceProvider:
+
+    name = None
 
     UNKNOWN_SERVICE_ERRMSG = '"{}" is not a service we know of.'
     TOO_MANY_CREATION_METHODS_ERRMSG = 'You must define either a class, an instance, ' \
@@ -125,7 +126,9 @@ class ServiceProvider(metaclass=Singleton):
 
     _local = Local()
 
-    def __init__(self):
+    def __init__(self, *providers, name: str = None):
+        self.name = name
+        self._providers = providers
         self.importer = Importer()  # Can't inject it, obviously.
         self.service_conf = {}
         self.app_conf = {}
@@ -145,20 +148,37 @@ class ServiceProvider(metaclass=Singleton):
     def reset(self):
         release_local(self._local)
 
+        for p in self._providers:
+            p.reset()
+
     def conf(self, service_conf: dict, app_conf: dict = None):
         if app_conf is None:
             app_conf = {}
 
         self.service_conf = service_conf
         self.app_conf = app_conf
+        self.name = service_conf.get("name") or self.name
 
         service_names, namespaces = get_services_and_namespaces(service_conf.keys(), self)
+
         self._service_names = service_names
         self._namespaces = namespaces
 
+        errors = []
+        for ns in namespaces:
+            for p in self._providers:
+                if ns in p.namespaces:
+                    errors.append(
+                        f"Namespace {ns} from the service conf clashes with an existing "
+                        f" on in the provider {p.name}"
+                    )
+
+        if errors:
+            raise ValueError("\n".join(errors))
+
     @property
     def namespaces(self):
-        return self._namespaces.keys()
+        return list(self._namespaces.keys()) + [p.name for p in self._providers]
 
     @property
     def service_names(self):
@@ -171,12 +191,35 @@ class ServiceProvider(metaclass=Singleton):
         elif key in self._service_names:
             return self.get(key)
 
+        elif "." in key:
+            # a service from a parent provider might have been requested
+            service_key = ".".join(key.split(".")[1:])
+            try:
+                for p in self._providers:
+                    return getattr(p, service_key)
+
+            except AttributeError:
+                pass
+        else:
+            # a provider might be referenced by its name
+            for p in self._providers:
+                if key == p.name:
+                    return p
+
         raise AttributeError(f"Unknown attribute, service or namespace '{key}'")
 
     def get(self, name: str, **kwargs):
         self._init_local()
 
         if name not in self.service_conf:
+            if "." in name:
+                parent = name.split(".")[0]
+                service_key = ".".join(name.split(".")[1:])
+
+                for p in self._providers:
+                    if parent == p.name:
+                        return p.get(service_key, **kwargs)
+
             raise UnknownServiceError(self.UNKNOWN_SERVICE_ERRMSG.format(name))
 
         return self._get_set_service(name) or self._get_built_service(name, **kwargs)
