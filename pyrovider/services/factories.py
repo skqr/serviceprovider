@@ -62,9 +62,9 @@ def service_provider_from_sources(
                 service_key = f"{source.name}.{key}" if source.as_namespace else key
                 alt_service_key = None
 
-                # If there was an entry named with dashes
+                # If there was an entry name with dashes
                 # we create an alternate name with dashboards so
-                # its a valid python attribute name and can be accessed
+                # it's a valid python attribute name and can be accessed
                 # with dot notation
                 if create_alt_names_for_dashes and '-' in service_key:
                     alt_service_key = service_key.replace('-', '_')
