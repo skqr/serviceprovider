@@ -4,7 +4,10 @@ from dotenv import find_dotenv, load_dotenv
 from pyrovider.meta.construction import Singleton
 from pyrovider.meta.ioc import Importer
 from pyrovider.tools.dicttools import dictpath
-from werkzeug import Local, release_local
+try:
+    from werkzeug import Local, release_local
+except:
+    from werkzeug.local import Local, release_local
 
 # Loads env vars from .env file
 load_dotenv(find_dotenv())
@@ -46,8 +49,7 @@ class ServiceFactory():
         raise NotImplementedError()
 
 
-# class ServiceProvider():
-class ServiceProvider(metaclass=Singleton):
+class ServiceProvider:
 
     UNKNOWN_SERVICE_ERRMSG = '"{}" is not a service we know of.'
     TOO_MANY_CREATION_METHODS_ERRMSG = 'You must define either a class, an instance, ' \
