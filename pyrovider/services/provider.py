@@ -167,10 +167,10 @@ class ServiceProvider:
         errors = []
         for ns in namespaces:
             for p in self._providers:
-                if ns in p.namespaces:
+                if ns == p.name:
                     errors.append(
                         f"Namespace {ns} from the service conf clashes with an existing "
-                        f" on in the provider {p.name}"
+                        f"provider under namespace {p.name}"
                     )
 
         if errors:
