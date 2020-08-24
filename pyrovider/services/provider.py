@@ -52,7 +52,7 @@ class ServiceFactory():
         raise NotImplementedError()
 
 
-def get_services_and_namespaces(services_names: List[str], provider):
+def get_services_and_namespaces(services_names: List[str], provider, parent_namespace=None):
     services = []
     namespaces = {}
     namespace_map = defaultdict(list)
@@ -66,18 +66,23 @@ def get_services_and_namespaces(services_names: List[str], provider):
         else:
             services.append(key)
     for namespace, namespace_service_names in namespace_map.items():
-        namespaces[namespace] = Namespace(namespace, namespace_service_names, provider)
+        namespaces[namespace] = Namespace(
+            namespace, namespace_service_names, provider, parent=parent_namespace
+        )
 
     return services, namespaces
 
 
 class Namespace:
 
-    def __init__(self, name, services_names, provider):
+    def __init__(self, name, services_names, provider, parent=None):
         self.name = name
+        self.parent = parent
         self.provider = provider
 
-        services, namespaces = get_services_and_namespaces(services_names, provider)
+        services, namespaces = get_services_and_namespaces(
+            services_names, provider, parent_namespace=self
+        )
         self._service_names = services
         self._namespaces = namespaces
 
@@ -90,11 +95,15 @@ class Namespace:
 
         raise AttributeError(f"Unknown attribute or service '{key}'")
 
+    @property
+    def path(self):
+        return f"{self.parent.path}.{self.name}" if self.parent else self.name
+
     def get(self, name, **kwargs):
-        return self.provider.get(f"{self.name}.{name}", **kwargs)
+        return self.provider.get(f"{self.path}.{name}", **kwargs)
 
     def set(self, name: str, service: any):
-        return self.provider.set(f"{self.name}.{name}", service)
+        return self.provider.set(f"{self.path}.{name}", service)
 
     @property
     def namespaces(self):

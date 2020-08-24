@@ -52,3 +52,25 @@ class NamespaceTest(unittest.TestCase):
 
         assert self.provider.foo.get("service2")
         assert isinstance(self.provider.foo.get("service2"), MockServiceI)
+
+    def test_getting_by_dot_notation(self):
+        assert self.provider.foo
+        assert self.provider.foo.bar
+        assert self.provider.foo.bar.service4
+
+        assert self.provider.get("foo.bar.service4")
+        assert self.provider.foo.get("bar.service4")
+        assert self.provider.foo.bar.get("service4")
+
+        # Namespaces have a path
+        assert self.provider.foo.path == "foo"
+        assert self.provider.foo.bar.path == "foo.bar"
+
+    def test_setting_service_in_namespace(self):
+        class Dummy:
+            pass
+
+        d = Dummy()
+
+        self.provider.foo.bar.set("service4", d)
+        assert self.provider.foo.bar.service4 == d
