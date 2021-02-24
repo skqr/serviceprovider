@@ -1,5 +1,6 @@
 import os
 
+from ast import literal_eval
 from typing import List, Dict, Tuple
 from collections import defaultdict
 
@@ -336,7 +337,7 @@ class ServiceProvider:
 
         try:
             if string:
-                return eval(string)
+                return literal_eval(string)
         except SyntaxError:
             pass
 
