@@ -332,5 +332,12 @@ class ServiceProvider:
 
     def _get_env(self, var: str, default: any = None):
         default = self._get_arg(default)
+        string = os.environ.get(var, default)
 
-        return os.environ.get(var, default)
+        try:
+            if string:
+                return eval(string)
+        except SyntaxError:
+            pass
+
+        return string
